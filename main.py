@@ -1,27 +1,26 @@
 from collections import UserDict
 
 class Field:
-    def __init__(self, value, name):
+    def __init__(self, value):
         self.value = value
-        self.name = name
 
 class Name(Field):
-    def validation(self, number):
-        if len(number) != 10 or not number.isdigit():
-            raise ValueError("Number must be 10 digits.")
+    def validation(self):
+        if not self.value.isalpha():
+            raise ValueError("Name must contain only alphabetic.")
 
 class Phone(Field):
     def __init__(self, value):
-        if not self.is_valid(value):
-            raise ValueError("Invalid phone number.")
-        super().__init__(value, "phone")
+        super().__init__(value)
+        self.validation()
 
-    def is_valid(self, number):
-        return len(number) == 10 and number.isdigit()
+    def validation(self):
+        if not (len(self.value) == 10 and self.value.isdigit()):
+            raise ValueError("Incorrect number.")
 
 class Record:
     def __init__(self, name):
-        self.name = Name(name, "name")
+        self.name = Name(name)
         self.phones = []
 
     def add_phone(self, phone_number):
@@ -33,12 +32,10 @@ class Record:
     def edit_phone(self, old_number, new_number):
         for phone in self.phones:
             if phone.value == old_number:
-                if phone.is_valid(new_number):
-                    phone.value = new_number
-                else:
-                    raise ValueError(f"Invalid phone number: {new_number}")
+                phone.value = new_number
+                phone.validation()
                 return
-        raise ValueError(f"Phone number '{old_number}' does not exist for editing.")
+        raise ValueError(f"Invalid phone number: {new_number}")
 
     def find_phone(self, phone_number):
         return next((phone for phone in self.phones if phone.value == phone_number), None)
