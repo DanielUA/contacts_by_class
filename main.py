@@ -1,27 +1,62 @@
 from collections import UserDict
+from datetime import date, datetime
 
 class Field:
     def __init__(self, value):
-        self.value = value
+        if not self.valid(value):
+            raise ValueError("Incorrect value")
+        self.__value = value
+    
+    def valid(self, value):
+        return True
+    
+    @property
+    def value(self):
+        return self.__value 
+    
+    @value.setter
+    def value(self, value):
+        if not self.valid(value):
+            raise ValueError("Incorrect value")
+        self.__value = value    
+
 
 class Name(Field):
-    def validation(self):
-        if not self.value.isalpha():
-            raise ValueError("Name must contain only alphabetic.")
+    pass
 
 class Phone(Field):
-    def __init__(self, value):
-        super().__init__(value)
-        self.validation()
+    def valid(self, value):
+        if not (len(value) == 10 and value.isdigit()):
+            return False
+        return True
 
-    def validation(self):
-        if not (len(self.value) == 10 and self.value.isdigit()):
-            raise ValueError("Incorrect number.")
+class Birthday(Field):
+    def valid(self, value): # 15.08.2000
+        try:
+            datetime.strptime(value, "%d.%m.%Y")
+            return True
+        except:
+            return False
+
 
 class Record:
-    def __init__(self, name):
+    def __init__(self, name, birthday=None):
         self.name = Name(name)
         self.phones = []
+        self.birthday = Birthday(birthday) if birthday != None else None
+
+    def days_to_birthday(self):
+        if self.birthday is None:
+            return "no data of birthday"
+        day_now: date = date.today()
+        str_date = self.birthday.value
+        birth_update = datetime.strptime(str_date, "%d.%m.%Y")
+        year_birthday = birth_update.replace(year=day_now.year)
+        days_until_birthday: int = (year_birthday - day_now).days
+        if days_until_birthday < 0:
+            year_birthday = birth_update.replace(year=day_now.year+1)
+        days_until_birthday: int = (year_birthday - day_now).days
+        return days_until_birthday
 
     def add_phone(self, phone_number):
         self.phones.append(Phone(phone_number))
@@ -45,6 +80,11 @@ class Record:
         return f"Contact name: {self.name.value}, phones: {phones_str}"
 
 class AddressBook(UserDict):
+    def iterator(self, n):
+        dict_to_list = list(self.data.values())
+        for i in range(0, len(dict_to_list), n): 
+            yield dict_to_list[i:i+n]            
+                
     def add_record(self, record):
         self.data[record.name.value] = record
 
