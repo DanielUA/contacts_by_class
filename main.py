@@ -1,41 +1,47 @@
 from collections import UserDict
 from datetime import date, datetime
 
-class Field:
+
+class Field():
     def __init__(self, value):
         if not self.valid(value):
             raise ValueError("Incorrect value")
-        self.__value = value
+        self._value = value
     
     def valid(self, value):
-        return True
-    
+        pass
+
     @property
     def value(self):
-        return self.__value 
-    
+        return self._value
+
     @value.setter
     def value(self, value):
         if not self.valid(value):
             raise ValueError("Incorrect value")
-        self.__value = value    
+        self._value = value
 
 
 class Name(Field):
-    pass
+    def valid(self, value):
+        return value.isalpha()
+
 
 class Phone(Field):
     def valid(self, value):
-        if not (len(value) == 10 and value.isdigit()):
+        try: 
+            len(value) == 10 and value.isdigit()
+            return True
+        except ValueError("Incorrect number"):
             return False
-        return True
+
 
 class Birthday(Field):
-    def valid(self, value): # 15.08.2000
+    def valid(self, value):
         try:
             datetime.strptime(value, "%d.%m.%Y")
             return True
-        except:
+        except ValueError:
             return False
 
 
@@ -43,20 +49,23 @@ class Record:
     def __init__(self, name, birthday=None):
         self.name = Name(name)
         self.phones = []
-        self.birthday = Birthday(birthday) if birthday != None else None
+        self.birthday = Birthday(birthday) if birthday is not None else None
 
     def days_to_birthday(self):
         if self.birthday is None:
             return "no data of birthday"
-        day_now: date = date.today()
+        day_now = date.today()
         str_date = self.birthday.value
-        birth_update = datetime.strptime(str_date, "%d.%m.%Y")
-        year_birthday = birth_update.replace(year=day_now.year)
-        days_until_birthday: int = (year_birthday - day_now).days
-        if days_until_birthday < 0:
-            year_birthday = birth_update.replace(year=day_now.year+1)
-        days_until_birthday: int = (year_birthday - day_now).days
-        return days_until_birthday
+        try:
+            birth_update = datetime.strptime(str_date, "%d.%m.%Y")
+            year_birthday = birth_update.replace(year=day_now.year)
+            days_until_birthday = (year_birthday - day_now).days
+            if days_until_birthday < 0:
+                year_birthday = birth_update.replace(year=day_now.year + 1)
+                days_until_birthday = (year_birthday - day_now).days
+            return days_until_birthday
+        except ValueError:
+            return "Incorrect date format"
 
     def add_phone(self, phone_number):
         self.phones.append(Phone(phone_number))
@@ -68,9 +77,9 @@ class Record:
         for phone in self.phones:
             if phone.value == old_number:
                 phone.value = new_number
-                phone.validation()
+                phone.valid(new_number)
                 return
-        raise ValueError(f"Invalid phone number: {new_number}")
+        raise ValueError(f"Invalid phone number: {old_number}")
 
     def find_phone(self, phone_number):
         return next((phone for phone in self.phones if phone.value == phone_number), None)
@@ -79,12 +88,13 @@ class Record:
         phones_str = '; '.join(str(phone.value) for phone in self.phones)
         return f"Contact name: {self.name.value}, phones: {phones_str}"
 
+
 class AddressBook(UserDict):
-    def iterator(self, n):
-        dict_to_list = list(self.data.values())
-        for i in range(0, len(dict_to_list), n): 
-            yield dict_to_list[i:i+n]            
-                
+    def chunks(self, n):
+        values = list(self.data.values())
+        for i in range(0, len(values), n):
+            yield values[i:i + n]
+
     def add_record(self, record):
         self.data[record.name.value] = record
 
@@ -125,7 +135,6 @@ print(john)  # Виведення: Contact name: John, phones: 1112223333; 55555
 
     # Пошук конкретного телефону у записі John
 found_phone = john.find_phone("5555555555")
-print(f"{john.name}: {found_phone}")  # Виведення: 5555555555
 
     # Видалення запису Jane
 book.delete("Jane")
