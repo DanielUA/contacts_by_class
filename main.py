@@ -28,11 +28,9 @@ class Name(Field):
 
 class Phone(Field):
     def valid(self, value):
-        try: 
-            len(value) == 10 and value.isdigit()
-            return True
-        except ValueError("Incorrect number"):
+        if not (len(value) == 10 and value.isdigit()):
             return False
+        return True
 
 
 class Birthday(Field):
