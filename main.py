@@ -6,21 +6,20 @@ class Field():
     def __init__(self, value):
         if not self.valid(value):
             raise ValueError("Incorrect value")
-        self._value = value
+        self.__value = value
     
     def valid(self, value):
-        pass
-
+        return True
+ 
     @property
     def value(self):
-        return self._value
+        return self.__value
 
     @value.setter
     def value(self, value):
         if not self.valid(value):
             raise ValueError("Incorrect value")
-        self._value = value
-
+        self.__value = value
 
 class Name(Field):
     def valid(self, value):
@@ -42,7 +41,7 @@ class Birthday(Field):
             datetime.strptime(value, "%d.%m.%Y")
             return True
         except ValueError:
-            return False
+            return False 
 
 
 class Record:
@@ -78,7 +77,7 @@ class Record:
             if phone.value == old_number:
                 phone.value = new_number
                 phone.valid(new_number)
-                return
+                return 
         raise ValueError(f"Invalid phone number: {old_number}")
 
     def find_phone(self, phone_number):
