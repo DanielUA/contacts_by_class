@@ -1,5 +1,7 @@
 from collections import UserDict
 from datetime import date, datetime
+import os
+import pickle
 
 
 class Field():
@@ -43,8 +45,9 @@ class Birthday(Field):
 
 
 class Record:
-    def __init__(self, name, birthday=None):
+    def __init__(self, name, birthday=None, file=None):
         self.name = Name(name)
+        self.file = file if file is not None else None
         self.phones = []
         self.birthday = Birthday(birthday) if birthday is not None else None
 
@@ -80,6 +83,17 @@ class Record:
 
     def find_phone(self, phone_number):
         return next((phone for phone in self.phones if phone.value == phone_number), None)
+    
+    def find_user_by_phone_name(self, query):
+        query = query.lower()
+        if query.isdigit():
+            for phone in self.phones:
+                if query in phone.value:
+                    return str(self)
+        elif query.isalpha():
+            if query in self.name.value.lower():
+                return str(self)
+        return None
 
     def __str__(self):
         phones_str = '; '.join(str(phone.value) for phone in self.phones)
@@ -87,7 +101,7 @@ class Record:
 
 
 class AddressBook(UserDict):
-    def chunks(self, n):
+    def iterator(self, n):
         values = list(self.data.values())
         for i in range(0, len(values), n):
             yield values[i:i + n]
@@ -101,6 +115,32 @@ class AddressBook(UserDict):
     def delete(self, name):
         if name in self.data:
             del self.data[name]
+    
+    def save_address_book(self):
+        if self.file:
+            with open(self.file, "wb") as fh:
+                pickle.dump(self, fh)
+            print("Address book saved successfully.")
+
+    def load_address_book(self):
+        if self.file and os.path.exists(self.file):
+            with open(self.file, "rb") as fh:
+                content = pickle.load(fh)
+                print("Address book loaded successfully.")
+                return content
+        else:
+            print(f"File '{self.file}' not found.")
+            return None
+
+    def search(self, query):
+        result = []
+        for record in self.data.values():
+            found_user = record.find_user_by_phone_name(query)
+            if found_user:
+                result.append(found_user)
+        return result
+
+    
 
 
 
@@ -135,3 +175,12 @@ found_phone = john.find_phone("5555555555")
 
     # Видалення запису Jane
 book.delete("Jane")
+
+# Збереження адресної книги на диск
+book.file = "address_book.pkl"
+book.save_address_book()
+
+# Відновлення адресної книги з диска
+restored_book = AddressBook()
+restored_book.file = "address_book.pkl"
+restored_book.load_address_book()
